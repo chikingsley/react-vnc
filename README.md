@@ -3,7 +3,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <!-- <a href="https://github.com/roerohan/react-vnc">
+  <!-- <a href="https://github.com/chikingsley/react-vnc">
     <img src="https://project-logo.png" alt="Logo" width="80">
   </a> -->
 
@@ -12,14 +12,14 @@
   <p align="center">
     A React Component to connect to a websockified VNC client using noVNC.
     <br />
-    <a href="https://github.com/roerohan/react-vnc"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/chikingsley/react-vnc"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <a href="https://roerohan.github.io/react-vnc/">View Demo</a>
     ·
-    <a href="https://github.com/roerohan/react-vnc/issues">Report Bug</a>
+    <a href="https://github.com/chikingsley/react-vnc/issues">Report Bug</a>
     ·
-    <a href="https://github.com/roerohan/react-vnc/issues">Request Feature</a>
+    <a href="https://github.com/chikingsley/react-vnc/issues">Request Feature</a>
   </p>
 </p>
 
@@ -71,7 +71,7 @@ A demo website using the `react-vnc` library is hosted on [https://roerohan.gith
 To install the library, you can run the following command:
 
 ```bash
-bun add react-vnc
+bun add @chikingsley/react-vnc
 ```
 
 ### Contribution
@@ -80,7 +80,7 @@ In order to run the project locally, follow these steps:
 
 1. Clone the repository.
 ```bash
-git clone git@github.com:roerohan/react-vnc.git
+git clone git@github.com:chikingsley/react-vnc.git
 cd react-vnc
 ```
 
@@ -327,7 +327,7 @@ interface Props {
 
 To know more about these props, check out [API.md](https://github.com/novnc/noVNC/blob/master/docs/API.md#properties).
 
-You can pass a `ref` to the `VncScreen` component, and access the `connect()` and `disconnect()` methods from the library. Check out [#18](https://github.com/roerohan/react-vnc/issues/18) for more details.
+You can pass a `ref` to the `VncScreen` component, and access the `connect()` and `disconnect()` methods from the library. Check out [#18](https://github.com/chikingsley/react-vnc/issues/18) for more details.
 
 The `ref` object has the following type:
 ```ts
@@ -362,7 +362,7 @@ Server verification is manual by default. If the server emits `serververificatio
 <!-- ROADMAP -->
 ## Roadmap
 
-See the [open issues](https://github.com/roerohan/react-vnc/issues) for a list of proposed features (and known issues).
+See the [open issues](https://github.com/chikingsley/react-vnc/issues) for a list of proposed features (and known issues).
 
 
 
@@ -390,5 +390,5 @@ Distributed under the MIT License. See [`LICENSE`](./LICENSE) for more informati
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [roerohan-url]: https://roerohan.github.io
-[issues-shield]: https://img.shields.io/github/issues/roerohan/react-vnc.svg?style=flat-square
-[issues-url]: https://github.com/roerohan/react-vnc/issues
+[issues-shield]: https://img.shields.io/github/issues/chikingsley/react-vnc.svg?style=flat-square
+[issues-url]: https://github.com/chikingsley/react-vnc/issues

@@ -1,8 +1,8 @@
 {
-  "name": "react-vnc",
+  "name": "@chikingsley/react-vnc",
   "version": "3.2.0",
   "description": "A React Component to connect to a websockified VNC client using noVNC.",
-  "author": "roerohan",
+  "author": "chikingsley",
   "license": "MIT",
   "main": "dist/index.js",
   "type": "module",
@@ -31,10 +31,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/roerohan/react-vnc.git"
+    "url": "git+https://github.com/chikingsley/react-vnc.git"
   },
   "bugs": {
-    "url": "https://github.com/roerohan/react-vnc/issues"
+    "url": "https://github.com/chikingsley/react-vnc/issues"
   },
   "dependencies": {
     "@novnc/novnc": "1.7.0-beta",
