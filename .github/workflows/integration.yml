@@ -1,0 +1,26 @@
+name: Run Real Browser Integration Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Playwright browser dependencies
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run dockerized real tests
+        run: bun run e2e:test

@@ -37,12 +37,13 @@ export default defineConfig(({ mode }) => {
         formats: ['es', 'umd'],
       },
       rollupOptions: {
-        external: ['react', 'react-dom', 'react/jsx-runtime'],
+        external: ['react', 'react-dom', 'react/jsx-runtime', '@novnc/novnc'],
         output: {
           globals: {
             react: 'React',
             'react-dom': 'ReactDOM',
             'react/jsx-runtime': 'ReactJSXRuntime',
+            '@novnc/novnc': 'RFB',
           }
         }
       },

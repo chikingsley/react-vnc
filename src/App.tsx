@@ -2,9 +2,12 @@ import React, { useRef, useState } from 'react';
 import './App.css';
 import { VncScreen } from './lib';
 
+const spacerStyle = { width: '2rem', display: 'inline-block' } as const;
+
 function App() {
   const [vncUrl, setVncUrl] = useState('');
   const [inputUrl, setInputUrl] = useState('');
+  const [clipboardText, setClipboardText] = useState('');
   const vncScreenRef = useRef<React.ElementRef<typeof VncScreen>>(null);
 
   const isValid = (vncUrl: string) => {
@@ -15,19 +18,17 @@ function App() {
     return true;
   };
 
-  const Spacer = () => <div style={{ width: '2rem', display: 'inline-block' }} />;
-
   return (
     <>
       <div style={{ margin: '1rem' }}>
         <label htmlFor="url">URL for VNC Stream</label>
-        <Spacer />
+        <div style={spacerStyle} />
 
         <input type="text" onChange={({ target: { value } }) => {
           setInputUrl(value);
         }} name="url" placeholder="wss://your-vnc-url" />
 
-        <Spacer />
+        <div style={spacerStyle} />
         <button onClick={() => setVncUrl(inputUrl)}>Go!</button>
       </div>
 
@@ -49,6 +50,30 @@ function App() {
           }}
         >
           Connect / Disconnect
+        </button>
+      </div>
+
+      <div style={{ margin: '1rem' }}>
+        <label htmlFor="clipboard-input">Clipboard Text</label>
+        <div style={spacerStyle} />
+        <input
+          id="clipboard-input"
+          data-testid="clipboard-input"
+          type="text"
+          onChange={({ target: { value } }) => {
+            setClipboardText(value);
+          }}
+          value={clipboardText}
+          placeholder="text to send to remote clipboard"
+        />
+        <div style={spacerStyle} />
+        <button
+          data-testid="clipboard-send"
+          onClick={() => {
+            vncScreenRef.current?.clipboardPaste(clipboardText);
+          }}
+        >
+          Send Clipboard
         </button>
       </div>
 

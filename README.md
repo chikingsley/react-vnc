@@ -71,7 +71,7 @@ A demo website using the `react-vnc` library is hosted on [https://roerohan.gith
 To install the library, you can run the following command:
 
 ```bash
-npm i react-vnc
+bun add react-vnc
 ```
 
 ### Contribution
@@ -86,20 +86,75 @@ cd react-vnc
 
 2. Install the packages and submodules.
 ```bash
-npm install
+bun install
 git submodule update --init --recursive
 ```
 
 3. To run the sample `react-vnc` web application:
 ```bash
 echo "REACT_APP_VNC_URL=ws://your-vnc-url.com" > .env
-npm start
+bun run start
 ```
 
 4. To build the library, make changes inside the `lib` folder, then run:
 ```bash
-npm run build:lib
+bun run build:lib
 ```
+
+5. To run unit tests:
+```bash
+bun run test
+```
+
+6. Install Playwright Chromium once:
+```bash
+bun run e2e:install
+```
+
+7. To run real browser integration tests against a dockerized VNC target:
+```bash
+bun run test:real
+```
+This requires Docker and will spin up a disposable VNC + websockify container.
+
+8. To run browser tests in headed or UI mode:
+```bash
+bun run test:real:headed
+bun run test:real:ui
+```
+`test:real:headed` runs visible Chromium for one pass.  
+`test:real:ui` opens Playwright UI mode so you can repeatedly run/debug tests interactively.
+
+If you want a visibly slower run you can watch end-to-end:
+```bash
+bun run test:real:watch
+```
+
+If you want step debugging:
+```bash
+bun run test:real:debug
+```
+
+If you want an inspectable HTML report:
+```bash
+bun run test:real:report
+```
+
+9. If you already have the VNC target running and want to skip Docker orchestration:
+```bash
+E2E_USE_DOCKER=0 bun run e2e:test
+```
+
+### Test Layout
+
+All tests now live under the top-level `tests/` directory:
+
+- `tests/unit/`: Bun unit tests for library behavior
+- `tests/e2e/specs/`: Playwright end-to-end tests
+  - covers live connect/render, clipboard transport send path, and reconnect regression protection
+- `tests/e2e/global-setup.ts`: Dockerized VNC stack startup for Playwright runs
+- `tests/e2e/global-teardown.ts`: Dockerized VNC stack cleanup
+- `tests/vnc-server/`: disposable VNC fixture image (Xvfb + x11vnc + websockify)
 
 
 <!-- USAGE EXAMPLES -->
@@ -189,6 +244,23 @@ This approach is particularly useful for:
 - Connection pooling or reuse
 - Advanced WebSocket configuration
 
+### Credentials Shape
+
+When using `rfbOptions`, credentials must be nested under `credentials`:
+
+```ts
+<VncScreen
+  url="wss://your-vnc-url.com"
+  rfbOptions={{
+    credentials: {
+      password: "your-password",
+      username: "optional-username",
+      target: "optional-target",
+    },
+  }}
+/>
+```
+
 Either `url` or `websocket` is required:
 - **`url`**: A `ws://` or `wss://` websocket URL to connect to the VNC server
 - **`websocket`**: A pre-authenticated WebSocket instance (useful for custom authentication flows)
@@ -197,6 +269,20 @@ All other props to `VncScreen` are optional. The following is a list (an interfa
 
 ```ts
 type EventListeners = { [T in NoVncEventType]?: (event: NoVncEvents[T]) => void };
+
+type ServerVerificationInfo = {
+    type: string;
+    publickey?: Uint8Array;
+    fingerprint?: string;
+    receivedAt: string;
+};
+
+type ServerVerificationContext = {
+    rfb: RFB | null;
+    info: ServerVerificationInfo;
+    approve: () => void;
+    reject: () => void;
+};
 
 interface Props {
     url?: string;
@@ -220,12 +306,19 @@ interface Props {
     onConnect?: EventListeners['connect'];
     onDisconnect?: EventListeners['disconnect'];
     onCredentialsRequired?: EventListeners['credentialsrequired'];
+    onServerVerification?: (
+      event: NoVncEvents['serververification'],
+      context: ServerVerificationContext
+    ) => void;
     onSecurityFailure?: EventListeners['securityfailure'];
     onClipboard?: EventListeners['clipboard'];
     onBell?: EventListeners['bell'];
     onDesktopName?: EventListeners['desktopname'];
     onCapabilities?: EventListeners['capabilities'];
     onClippingViewport?: EventListeners['clippingviewport'];
+    autoApproveServerVerification?: boolean;
+    onChildMouseLeave?: React.MouseEventHandler<HTMLDivElement>;
+    onChildMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
 }
 
 // The types NoVncOptions, NoVncEventType and NoVncEvents are from the
@@ -250,16 +343,21 @@ type VncScreenHandle = {
     machineShutdown: () => void;
     machineReboot: () => void;
     machineReset: () => void;
+    approveServer: () => void;
+    rejectServer: () => void;
     clipboardPaste: (text: string) => void;
     rfb: RFB | null;
     loading: boolean;
+    lastServerVerification: ServerVerificationInfo | null;
     eventListeners: EventListeners;
 };
 ```
 
 The `onConnect`, `onDisconnect`, `onCredentialsRequired`, and `onDesktopName` props are optional, and there are existing defaults set for them. For example, the default `onDisconnect` function consists of some logic to retry connecting after a certain timeout (specified by `retryDuration`). Check out the default `_onConnect` and `_onDisconnect` functions in [VncScreen.tsx](./src/lib/VncScreen.tsx) for more details.
 
-The `onConnect`, `onDisconnect`, and `onCredentialsRequired` callbacks can accept a single parameter `rfb`. This parameter is the `RFB` object, which is described by [**noVNC**](https://github.com/novnc/noVNC). Learn more about the `RFB` object [here](https://github.com/novnc/noVNC/blob/master/docs/API.md#rfb).
+Event callbacks receive the corresponding noVNC event object. To access the active `RFB` object, use `ref.current?.rfb`.
+
+Server verification is manual by default. If the server emits `serververification`, provide `onServerVerification` and call `context.approve()` after validating identity, or set `autoApproveServerVerification={true}` to skip manual verification.
 
 <!-- ROADMAP -->
 ## Roadmap
