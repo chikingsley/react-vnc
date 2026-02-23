@@ -1,3 +1,18 @@
+# [3.3.0](https://github.com/chikingsley/react-vnc/compare/v3.2.0...v3.3.0) (2026-02-23)
+
+
+### Bug Fixes
+
+* disable semantic-release PR comments to avoid 404 on forked repo ([94620c3](https://github.com/chikingsley/react-vnc/commit/94620c3f773099021a6b4385019de7e67d5ba207))
+* restore package.json scripts/devDeps and build lib in CI ([395015c](https://github.com/chikingsley/react-vnc/commit/395015c38f108902bee891431b403e4cbefc6768))
+* switch npm publish to OIDC trusted publishing with provenance ([c8612df](https://github.com/chikingsley/react-vnc/commit/c8612dfff4cc8b87aa19abf379ff10fa4338bccf))
+* target lib tsconfig in build:lib to avoid app build errors ([1d98e18](https://github.com/chikingsley/react-vnc/commit/1d98e181493c0a5c7329d1170cf7e93cc2c544e6))
+
+
+### Features
+
+* modernize project with bun, playwright, and novnc server verification ([b43481f](https://github.com/chikingsley/react-vnc/commit/b43481feeb78a2e5719fa31c5c07ad91a1285394))
+
 # 1.0.0 (2026-02-23)
 
 
