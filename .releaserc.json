@@ -10,7 +10,8 @@
       "@semantic-release/npm",
       {
         "npmPublish": true,
-        "tarballDir": "dist"
+        "tarballDir": "dist",
+        "provenance": true
       }
     ],
     [
@@ -31,5 +32,5 @@
       }
     ]
   ],
-  "repositoryUrl": "https://github.com/roerohan/react-vnc"
+  "repositoryUrl": "https://github.com/chikingsley/react-vnc"
 }
