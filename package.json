@@ -40,7 +40,7 @@
     "dev": "vite",
     "start": "vite",
     "build": "vite build --mode=app",
-    "build:lib": "tsc -b && vite build --mode=lib",
+    "build:lib": "tsc -b tsconfig.lib.json && vite build --mode=lib",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "e2e:install": "playwright install chromium",
@@ -59,7 +59,7 @@
     "test:real:debug": "PWDEBUG=1 bun run test:real:headed",
     "lint": "eslint . --ext .ts --ext .js",
     "lint:fix": "eslint . --ext .ts --ext .js --fix",
-    "prepack": "tsc -b && vite build --mode=lib"
+    "prepack": "tsc -b tsconfig.lib.json && vite build --mode=lib"
   },
   "dependencies": {
     "@novnc/novnc": "1.7.0-beta",
