@@ -315,7 +315,7 @@ Measurements:
 
 ## 6) Align wrapper defaults with upstream noVNC defaults
 
-Status: [ ] TODO
+Status: [x] DONE (2026-02-24)
 Priority: P1
 
 Problem:
@@ -353,6 +353,11 @@ Measurements:
 
 - Unit: snapshot/assert defaults applied to mocked `RFB` instance.
 - Doc check: defaults table verified against implementation.
+- Evidence:
+  - `tests/unit/lib/VncScreen.test.tsx` now includes
+    `applies noVNC upstream defaults for focusOnClick and background when props omitted`.
+  - `src/lib/VncScreen.tsx` defaults now match noVNC (`focusOnClick=true`, `background='rgb(40, 40, 40)'`).
+  - `README.md` documents these runtime defaults.
 
 ---
 

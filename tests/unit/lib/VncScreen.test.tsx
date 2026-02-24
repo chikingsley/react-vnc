@@ -215,6 +215,14 @@ describe('VncScreen', () => {
         expect(secondRfb.urlOrChannel).toBe('ws://example-2.com');
     });
 
+    it('applies noVNC upstream defaults for focusOnClick and background when props omitted', async () => {
+        render(<VncScreen url="ws://example.com" />);
+        const rfb = await waitForFirstRfb();
+
+        expect((rfb as any).focusOnClick).toBe(true);
+        expect((rfb as any).background).toBe('rgb(40, 40, 40)');
+    });
+
     it('uses latest callback props without forcing reconnect', async () => {
         const onClipboardV1 = mock(() => {});
         const { rerender } = render(

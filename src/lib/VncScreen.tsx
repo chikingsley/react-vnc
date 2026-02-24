@@ -590,13 +590,13 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
             const currentRfb = new RFB(screen.current, config.websocket || config.url!, config.rfbOptions);
 
             currentRfb.viewOnly = config.viewOnly ?? false;
-            currentRfb.focusOnClick = config.focusOnClick ?? false;
+            currentRfb.focusOnClick = config.focusOnClick ?? true;
             currentRfb.clipViewport = config.clipViewport ?? false;
             currentRfb.dragViewport = config.dragViewport ?? false;
             currentRfb.resizeSession = config.resizeSession ?? false;
             currentRfb.scaleViewport = config.scaleViewport ?? false;
             currentRfb.showDotCursor = config.showDotCursor ?? false;
-            currentRfb.background = config.background ?? '';
+            currentRfb.background = config.background ?? 'rgb(40, 40, 40)';
             currentRfb.qualityLevel = config.qualityLevel ?? 6;
             currentRfb.compressionLevel = config.compressionLevel ?? 2;
             setRfb(currentRfb);
