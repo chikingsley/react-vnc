@@ -302,6 +302,7 @@ interface Props {
     compressionLevel?: number;
     autoConnect?: boolean;
     retryDuration?: number;
+    maxRetries?: number;
     debug?: boolean;
     onConnect?: EventListeners['connect'];
     onDisconnect?: EventListeners['disconnect'];
@@ -353,7 +354,9 @@ type VncScreenHandle = {
 };
 ```
 
-The `onConnect`, `onDisconnect`, `onCredentialsRequired`, and `onDesktopName` props are optional, and there are existing defaults set for them. For example, the default `onDisconnect` function consists of some logic to retry connecting after a certain timeout (specified by `retryDuration`). Check out the default `_onConnect` and `_onDisconnect` functions in [VncScreen.tsx](./src/lib/VncScreen.tsx) for more details.
+The `onConnect`, `onDisconnect`, `onCredentialsRequired`, and `onDesktopName` props are optional, and there are existing defaults set for them. For example, the default disconnect behavior retries only on unexpected disconnects (`detail.clean === false`) when `autoConnect` is enabled and a raw `websocket` instance is not provided. Retry delay is controlled by `retryDuration` and total attempts are bounded by `maxRetries` (default `10`).
+
+When `onDisconnect` is provided, your callback still runs, and the built-in retry policy is still applied by default.
 
 Event callbacks receive the corresponding noVNC event object. To access the active `RFB` object, use `ref.current?.rfb`.
 

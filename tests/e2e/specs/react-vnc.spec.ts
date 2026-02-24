@@ -153,3 +153,20 @@ test('does not hit disconnected-RFB reconnect regression on failed websocket end
     expect(combined).toContain('Failed when connecting');
     expect(combined).not.toContain('Tried changing state of a disconnected RFB object');
 });
+
+test('connects after hot-swapping URL from invalid endpoint to a valid endpoint', async ({ page }) => {
+    const logs = getConsoleBuffer(page);
+    await page.goto('/');
+
+    await page.getByPlaceholder('wss://your-vnc-url').fill('ws://127.0.0.1:6099');
+    await page.getByRole('button', { name: 'Go!' }).click();
+    await page.waitForTimeout(1500);
+
+    await page.getByPlaceholder('wss://your-vnc-url').fill('ws://127.0.0.1:6080');
+    await page.getByRole('button', { name: 'Go!' }).click();
+
+    await expect(page.locator('canvas').first()).toBeVisible({ timeout: 60_000 });
+
+    const combined = logs.join('\n');
+    expect(combined).toContain('Connected to remote VNC.');
+});
