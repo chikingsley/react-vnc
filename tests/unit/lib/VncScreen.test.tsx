@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { VncScreenHandle } from '../../../src/lib/VncScreen';
 
 type MockFn = ReturnType<typeof mock>;
-type MockRfbInstance = {
+interface MockRfbInstance {
     blur: MockFn;
     focus: MockFn;
     disconnect: MockFn;
@@ -18,7 +18,9 @@ type MockRfbInstance = {
     clipboardPasteFrom: MockFn;
     urlOrChannel: string | WebSocket;
     dispatchEvent: (event: Event) => boolean;
-};
+    focusOnClick: boolean;
+    background: string;
+}
 
 const mockRfbInstances: MockRfbInstance[] = [];
 
@@ -225,8 +227,8 @@ describe('VncScreen', () => {
         render(<VncScreen url="ws://example.com" />);
         const rfb = await waitForFirstRfb();
 
-        expect((rfb as any).focusOnClick).toBe(true);
-        expect((rfb as any).background).toBe('rgb(40, 40, 40)');
+        expect(rfb.focusOnClick).toBe(true);
+        expect(rfb.background).toBe('rgb(40, 40, 40)');
     });
 
     it('uses latest callback props without forcing reconnect', async () => {

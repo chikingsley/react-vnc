@@ -10,7 +10,11 @@ export default defineConfig(({ mode }) => {
   if (mode === 'app') {
     return {
       plugins: [
-        react(),
+        react({
+        babel: {
+          plugins: ['babel-plugin-react-compiler'],
+        },
+      }),
       ],
       server: {
         port: 3000,
@@ -24,7 +28,11 @@ export default defineConfig(({ mode }) => {
   }
   return {
     plugins: [
-      react(),
+      react({
+        babel: {
+          plugins: ['babel-plugin-react-compiler'],
+        },
+      }),
       dts({ tsconfigPath: 'tsconfig.lib.json' }),
     ],
     server: {

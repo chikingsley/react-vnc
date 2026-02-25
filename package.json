@@ -8,7 +8,7 @@
   "main": "dist/index.js",
   "module": "dist/react-vnc.js",
   "source": "src/lib/index.tsx",
-  "typings": "dist/types/lib/index.d.ts",
+  "typings": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -57,21 +57,23 @@
     "test:real:watch": "bun run e2e:install && bun run e2e:test:watch",
     "test:real:report": "bun run e2e:install && bun run e2e:test:report && bunx playwright show-report",
     "test:real:debug": "PWDEBUG=1 bun run test:real:headed",
-    "lint": "eslint . --ext .ts --ext .js",
-    "lint:fix": "eslint . --ext .ts --ext .js --fix",
+    "knip": "knip",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "prepack": "tsc -b tsconfig.lib.json && vite build --mode=lib"
   },
   "dependencies": {
     "@novnc/novnc": "1.7.0-beta",
-    "@types/novnc__novnc": "^1.6.0"
+    "@types/novnc__novnc": "^1.6.0",
+    "react-compiler-runtime": "^1.0.0"
   },
   "peerDependencies": {
     "react": ">=19.0.0",
     "react-dom": ">=19.0.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.4.2",
-    "@commitlint/config-conventional": "^20.4.2",
+    "@eslint/js": "^10.0.1",
+    "@happy-dom/global-registrator": "^20.7.0",
     "@playwright/test": "^1.58.2",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
@@ -79,30 +81,25 @@
     "@semantic-release/npm": "^13.1.4",
     "@semantic-release/release-notes-generator": "^14.1.0",
     "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^25.3.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.4",
-    "commitizen": "^4.3.1",
-    "cz-conventional-changelog": "^3.3.0",
-    "eslint": "^9.39.2",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "eslint": "^10.0.2",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import-x": "^4.16.1",
+    "eslint-plugin-react-dom": "^2.13.0",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.5.0",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "eslint-plugin-react-x": "^2.13.0",
     "globals": "^17.3.0",
-    "@happy-dom/global-registrator": "^20.0.8",
-    "husky": "^9.1.7",
-    "is-ci": "^4.1.0",
+    "knip": "^5.85.0",
     "semantic-release": "^25.0.3",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.0",
+    "typescript-eslint": "^8.56.1",
     "vite": "^7.3.1",
     "vite-plugin-dts": "^4.5.4"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
   },
   "browserslist": {
     "production": [
@@ -115,15 +112,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
   }
 }

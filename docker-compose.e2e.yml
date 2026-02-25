@@ -4,8 +4,8 @@ services:
       context: .
       dockerfile: tests/vnc-server/Dockerfile
     ports:
-      - "5900:5900"
-      - "6080:6080"
+      - "6181:5900"
+      - "6180:6080"
     healthcheck:
       test: ["CMD-SHELL", "nc -z localhost 5900 && nc -z localhost 6080"]
       interval: 2s

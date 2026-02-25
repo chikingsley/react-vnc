@@ -12,19 +12,19 @@ import type { NoVncEventType, NoVncEvents, NoVncOptions } from '@novnc/novnc/lib
 
 type EventListeners = { [T in NoVncEventType]?: (event: NoVncEvents[T]) => void };
 
-export type ServerVerificationInfo = {
+export interface ServerVerificationInfo {
     type: string;
     publickey?: Uint8Array;
     fingerprint?: string;
     receivedAt: string;
-};
+}
 
-export type ServerVerificationContext = {
+export interface ServerVerificationContext {
     rfb: NoVncRfb | null;
     info: ServerVerificationInfo;
     approve: () => void;
     reject: () => void;
-};
+}
 
 type NoVncRfb = import('@novnc/novnc/lib/rfb').default;
 type NoVncCredentials = NonNullable<NoVncOptions['credentials']>;
@@ -68,7 +68,7 @@ export interface Props {
     ref?: React.Ref<VncScreenHandle>;
 }
 
-export type VncScreenHandle = {
+export interface VncScreenHandle {
     connect: () => void;
     disconnect: () => void;
     connected: boolean;
@@ -87,11 +87,11 @@ export type VncScreenHandle = {
     loading: boolean;
     lastServerVerification: ServerVerificationInfo | null;
     eventListeners: EventListeners;
-};
+}
 
 // Settings applied when creating a new RFB instance. Stored in a ref so
 // connect() reads latest values without changing its own identity.
-type ConnectionSettings = {
+interface ConnectionSettings {
     url?: string;
     websocket?: WebSocket;
     viewOnly?: boolean;
@@ -106,7 +106,7 @@ type ConnectionSettings = {
     qualityLevel?: number;
     compressionLevel?: number;
     debug: boolean;
-};
+}
 
 const VncScreen = (props: Props) => {
     const { ref } = props;
@@ -182,29 +182,29 @@ const VncScreen = (props: Props) => {
     const onDisconnectPropRef = useRef(onDisconnect);
     useEffect(() => { onDisconnectPropRef.current = onDisconnect; });
 
-    const info = useCallback((...args: any[]) => {
+    const info = (...args: unknown[]) => {
         if (settingsRef.current.debug) {
             console.info(...args);
         }
-    }, []);
+    };
 
-    const error = useCallback((...args: any[]) => {
+    const error = (...args: unknown[]) => {
         console.error(...args);
-    }, []);
+    };
 
     const getRfb = () => rfb.current;
     const setRfb = (_rfb: NoVncRfb | null) => { rfb.current = _rfb; };
     const getConnected = () => connected.current;
     const setConnected = (state: boolean) => { connected.current = state; };
 
-    const clearRetryTimeout = useCallback(() => {
+    const clearRetryTimeout = () => {
         if (retryTimeout.current) {
             clearTimeout(retryTimeout.current);
             retryTimeout.current = null;
         }
-    }, []);
+    };
 
-    const getServerFingerprint = useCallback(async (publickey: Uint8Array): Promise<string | undefined> => {
+    const getServerFingerprint = async (publickey: Uint8Array): Promise<string | undefined> => {
         const subtle = window?.crypto?.subtle;
         if (!subtle) {
             return undefined;
@@ -215,18 +215,18 @@ const VncScreen = (props: Props) => {
         return Array.from(new Uint8Array(digest).slice(0, 8))
             .map((x) => x.toString(16).padStart(2, '0'))
             .join('-');
-    }, []);
+    };
 
-    const approveServer = useCallback(() => {
+    const approveServer = () => {
         const currentRfb = getRfb();
         if (!currentRfb) {
             return;
         }
 
         currentRfb.approveServer?.();
-    }, []);
+    };
 
-    // --- disconnect (defined before connect so connect can depend on it) ---
+    // --- disconnect (in useEffect dep array — useCallback for stable identity) ---
 
     const disconnect = useCallback(() => {
         clearRetryTimeout();
@@ -261,11 +261,11 @@ const VncScreen = (props: Props) => {
             setRfb(null);
             setConnected(false);
         }
-    }, [clearRetryTimeout, error]);
+    }, []);
 
-    const rejectServer = useCallback(() => {
+    const rejectServer = () => {
         disconnect();
-    }, [disconnect]);
+    };
 
     // --- Effect Event handlers ---
     // These always read latest callback props from the closure without
@@ -467,6 +467,9 @@ const VncScreen = (props: Props) => {
     // identity changes). Registers event listeners as arrow wrappers around
     // Effect Events — the wrappers call the latest callback on every event.
 
+    // In useEffect dep array — useCallback for stable identity.
+    // The React Compiler auto-memoizes, but exhaustive-deps hasn't
+    // merged with the compiler linter yet (facebook/react#31475).
     const connect = useCallback(() => {
         try {
             if (getConnected() && getRfb()) {
@@ -502,9 +505,12 @@ const VncScreen = (props: Props) => {
             currentRfb.compressionLevel = s.compressionLevel ?? 2;
             setRfb(currentRfb);
 
-            // Arrow wrappers around Effect Events — Effect Events must be
-            // called from within effect callback chains, not passed directly
-            // as listener references (React docs caveat #2).
+            // Arrow wrappers around Effect Events — these are called from
+            // addEventListener callbacks inside this useEffect, which is the
+            // documented correct pattern for useEffectEvent (React docs caveat #2).
+            // The linter can't trace useEffectEvent calls through the arrow
+            // indirection. See: https://github.com/facebook/react/issues/35390
+            /* eslint-disable react-hooks/rules-of-hooks */
             const listeners: EventListeners = {
                 connect: (e) => onVncConnect(e),
                 disconnect: (e) => onVncDisconnect(e),
@@ -517,6 +523,7 @@ const VncScreen = (props: Props) => {
                 clippingviewport: (e) => onVncClippingViewport(e),
                 serververification: (e) => onVncServerVerification(e),
             };
+            /* eslint-enable react-hooks/rules-of-hooks */
             eventListeners.current = listeners;
 
             (Object.keys(listeners) as (NoVncEventType)[]).forEach((eventName) => {
@@ -530,7 +537,7 @@ const VncScreen = (props: Props) => {
             error(err);
             setConnected(false);
         }
-    }, [disconnect, clearRetryTimeout, error]);
+    }, [disconnect]);
 
     const sendCredentials = (credentials: NoVncCredentials) => {
         const currentRfb = getRfb();

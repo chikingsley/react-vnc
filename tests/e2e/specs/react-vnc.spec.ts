@@ -23,7 +23,7 @@ test('connects to a real dockerized VNC websocket endpoint', async ({ page }) =>
     const logs = getConsoleBuffer(page);
     await page.goto('/');
 
-    await page.getByPlaceholder('wss://your-vnc-url').fill('ws://127.0.0.1:6080');
+    await page.getByPlaceholder('wss://your-vnc-url').fill('ws://127.0.0.1:6180');
     await page.getByRole('button', { name: 'Go!' }).click();
 
     await expect
@@ -57,7 +57,7 @@ test('sends clipboard text over the active noVNC websocket session', async ({ pa
     const sentFrames = getSentWebSocketFrames(page);
     await page.goto('/');
 
-    await page.getByPlaceholder('wss://your-vnc-url').fill('ws://127.0.0.1:6080');
+    await page.getByPlaceholder('wss://your-vnc-url').fill('ws://127.0.0.1:6180');
     await page.getByRole('button', { name: 'Go!' }).click();
     await expect(page.locator('canvas').first()).toBeVisible({ timeout: 60_000 });
 
@@ -77,7 +77,7 @@ test('interacts with the VNC server visually (agent typing and mouse movement)',
     // This test is particularly designed for the user to watch the agent in headed/ui mode
     await page.goto('/');
 
-    await page.getByPlaceholder('wss://your-vnc-url').fill('ws://127.0.0.1:6080');
+    await page.getByPlaceholder('wss://your-vnc-url').fill('ws://127.0.0.1:6180');
     await page.getByRole('button', { name: 'Go!' }).click();
 
     const canvas = page.locator('canvas').first();
@@ -162,7 +162,7 @@ test('connects after hot-swapping URL from invalid endpoint to a valid endpoint'
     await page.getByRole('button', { name: 'Go!' }).click();
     await page.waitForTimeout(1500);
 
-    await page.getByPlaceholder('wss://your-vnc-url').fill('ws://127.0.0.1:6080');
+    await page.getByPlaceholder('wss://your-vnc-url').fill('ws://127.0.0.1:6180');
     await page.getByRole('button', { name: 'Go!' }).click();
 
     await expect(page.locator('canvas').first()).toBeVisible({ timeout: 60_000 });

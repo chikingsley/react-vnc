@@ -2,6 +2,11 @@ import { defineConfig } from '@playwright/test';
 
 const headless = process.env.PW_HEADLESS !== 'false';
 const slowMo = Number(process.env.PW_SLOWMO_MS ?? '0');
+const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
+
+const launchOptions: Record<string, unknown> = {};
+if (slowMo > 0) launchOptions.slowMo = slowMo;
+if (chromiumPath) launchOptions.executablePath = chromiumPath;
 
 export default defineConfig({
     testDir: './tests/e2e/specs',
@@ -18,7 +23,7 @@ export default defineConfig({
         headless,
         trace: 'on-first-retry',
         video: 'retain-on-failure',
-        launchOptions: slowMo > 0 ? { slowMo } : undefined,
+        launchOptions: Object.keys(launchOptions).length > 0 ? launchOptions : undefined,
     },
     webServer: {
         command: 'node ./node_modules/vite/bin/vite.js --host 127.0.0.1 --port 4173',

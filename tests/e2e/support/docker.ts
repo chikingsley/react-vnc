@@ -28,7 +28,7 @@ export const upDockerizedVnc = async () => {
     runCompose('up', '-d', '--build');
 
     const deadline = Date.now() + WAIT_TIMEOUT_MS;
-    const ports = [5900, 6080];
+    const ports = [6181, 6180];
 
     while (Date.now() < deadline) {
         const checks = await Promise.all(ports.map((port) => canConnect(port)));

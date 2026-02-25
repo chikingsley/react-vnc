@@ -1,0 +1,19 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "src/lib/index.tsx",
+    "tests/unit/**/*.test.{ts,tsx}",
+    "tests/e2e/**/*.{ts,tsx}"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "tests/**/*.{ts,tsx}"
+  ],
+  "ignore": ["src/**/*.d.ts"],
+  "ignoreDependencies": [
+    "@semantic-release/*",
+    "babel-plugin-react-compiler",
+    "react-compiler-runtime"
+  ],
+  "playwright": true
+}

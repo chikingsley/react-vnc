@@ -64,7 +64,7 @@ A demo website using the `react-vnc` library is hosted on [https://roerohan.gith
 To install the library, you can run the following command:
 
 ```bash
-bun add @chikingsley/react-vnc
+bun add @simonpeacocks/react-vnc
 ```
 
 ### Contribution
@@ -170,10 +170,10 @@ A `VncScreen` component is exposed from the library, to which you can pass the r
 
 ```ts
 import React, { useRef } from 'react';
-import { VncScreen } from 'react-vnc';
+import { VncScreen, type VncScreenHandle } from '@simonpeacocks/react-vnc';
 
 function App() {
-  const ref = useRef();
+  const ref = useRef<VncScreenHandle>(null);
 
   return (
     <VncScreen
@@ -198,7 +198,7 @@ If you need to handle authentication or perform a custom handshake before establ
 
 ```ts
 import React, { useEffect, useState } from 'react';
-import { VncScreen } from 'react-vnc';
+import { VncScreen } from '@simonpeacocks/react-vnc';
 
 function App() {
   const [websocket, setWebsocket] = useState<WebSocket | null>(null);
@@ -290,6 +290,8 @@ type ServerVerificationContext = {
     reject: () => void;
 };
 
+type NoVncCredentials = NonNullable<NoVncOptions["credentials"]>;
+
 interface Props {
     url?: string;
     websocket?: WebSocket;
@@ -326,6 +328,7 @@ interface Props {
     autoApproveServerVerification?: boolean;
     onChildMouseLeave?: React.MouseEventHandler<HTMLDivElement>;
     onChildMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
+    ref?: React.Ref<VncScreenHandle>;
 }
 
 // The types NoVncOptions, NoVncEventType and NoVncEvents are from the
@@ -343,7 +346,7 @@ type VncScreenHandle = {
     connect: () => void;
     disconnect: () => void;
     connected: boolean;
-    sendCredentials: (credentials: NoVncOptions["credentials"]) => void;
+    sendCredentials: (credentials: NoVncCredentials) => void;
     sendKey: (keysym: number, code: string, down?: boolean) => void;
     sendCtrlAltDel: () => void;
     focus: () => void;
