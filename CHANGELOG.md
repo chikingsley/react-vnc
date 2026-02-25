@@ -1,3 +1,11 @@
+# [3.4.0](https://github.com/chikingsley/react-vnc/compare/v3.3.0...v3.4.0) (2026-02-25)
+
+
+### Features
+
+* align noVNC defaults for focus and background ([003d353](https://github.com/chikingsley/react-vnc/commit/003d353f496bb8cc7813729d34dfb2933d9d1968))
+* implement p0 connection lifecycle hardening ([c51dd03](https://github.com/chikingsley/react-vnc/commit/c51dd0386d9e01dc6839ce1fa5b105f0e8c45179))
+
 # [3.3.0](https://github.com/chikingsley/react-vnc/compare/v3.2.0...v3.3.0) (2026-02-23)
 
 
