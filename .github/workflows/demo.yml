@@ -9,22 +9,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
-          registry-url: https://registry.npmjs.org/
+          bun-version: latest
 
-      - name: Set React environment using current directory
-        run: echo "PUBLIC_URL=/$(basename $(pwd))" >> $GITHUB_ENV
-
-      - name: npm install, lint
+      - name: Install, lint, build
         run: |
-          export GENERATE_SOURCEMAP=false
-          npm install
-          npm run lint:fix
-          npm run build
+          bun install
+          bun run lint:fix
+          bun run build
         env:
-          REACT_APP_BASE_URL: ${{ secrets.BACKEND_URL }}
           BASE_URL: "/react-vnc"
 
       - name: Deploy to github.io
