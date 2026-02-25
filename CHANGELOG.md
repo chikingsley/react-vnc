@@ -1,3 +1,10 @@
+## [3.4.1](https://github.com/chikingsley/react-vnc/compare/v3.4.0...v3.4.1) (2026-02-25)
+
+
+### Performance Improvements
+
+* enable React Compiler, upgrade ESLint 10, remove dead dependencies ([437247e](https://github.com/chikingsley/react-vnc/commit/437247e6fac90597bfcda3e5a2268106c2de9422))
+
 # [3.4.0](https://github.com/chikingsley/react-vnc/compare/v3.3.0...v3.4.0) (2026-02-25)
 
 
