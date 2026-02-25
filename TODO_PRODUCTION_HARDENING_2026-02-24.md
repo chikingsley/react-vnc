@@ -161,7 +161,7 @@ Measurements:
 
 ## 3) Retry policy: reconnect only on unexpected disconnect
 
-Status: [ ] TODO
+Status: [x] DONE (2026-02-24)
 Priority: P0
 
 Problem:
@@ -226,7 +226,7 @@ Measurements:
 
 ## 4) Credentials flow strictness
 
-Status: [ ] TODO
+Status: [x] DONE (2026-02-24)
 Priority: P1
 
 Problem:
@@ -363,7 +363,7 @@ Measurements:
 
 ## 7) React 19+ ref API future-proofing
 
-Status: [ ] TODO
+Status: [x] DONE (2026-02-24)
 Priority: P2
 
 Problem:
@@ -417,6 +417,14 @@ Measurements:
 
 - Unit: both legacy ref wiring and new ref-as-prop pathway expose equivalent handle methods.
 - Type tests: exported types remain valid for both usage modes.
+- Evidence:
+  - `forwardRef` removed; component now uses React 19 ref-as-prop pattern.
+  - `ref?: React.Ref<VncScreenHandle>` added to Props interface.
+  - `export default VncScreen` (no wrapper).
+  - **Bug found:** `forwardRef` + `useEffectEvent` is broken in React 19.2.4 — the
+    Effect Event's internal closure ref is not updated between renders when wrapped in
+    `forwardRef`. Confirmed via systematic bisection (8 component variants tested).
+    Removing `forwardRef` was required for the `useEffectEvent` refactor (item #2) to work.
 
 > **Review note (opus, 2026-02-24):** Add measurement:
 >
@@ -496,7 +504,7 @@ Measurements:
 
 ### 9a) `screen.current.innerHTML = ''` — use `replaceChildren()` instead
 
-Status: [ ] TODO
+Status: [x] DONE (2026-02-24)
 Priority: P2
 
 Problem:
@@ -521,7 +529,7 @@ Measurements:
 
 ### 9b) Errors silenced in non-debug mode
 
-Status: [ ] TODO
+Status: [x] DONE (2026-02-24)
 Priority: P1
 
 Problem:
@@ -546,7 +554,7 @@ Measurements:
 
 ### 9c) `connected` ref initialization coupled to `autoConnect`
 
-Status: [ ] TODO
+Status: [x] DONE (2026-02-24)
 Priority: P2
 
 Problem:
@@ -610,7 +618,7 @@ Measurements:
 
 ### 9e) Timeout array unbounded growth
 
-Status: [ ] TODO
+Status: [x] DONE (2026-02-24)
 Priority: P2
 
 Problem:
@@ -635,7 +643,7 @@ Measurements:
 
 ### 9f) `connect()` guard condition always true — compares ref objects, not values
 
-Status: [ ] TODO
+Status: [x] DONE (2026-02-24)
 Priority: P1
 
 Problem:

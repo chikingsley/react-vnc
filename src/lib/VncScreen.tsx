@@ -1,8 +1,8 @@
 import React, {
-    forwardRef,
     MouseEventHandler,
     useCallback,
     useEffect,
+    useEffectEvent,
     useImperativeHandle,
     useRef,
     useState,
@@ -65,6 +65,7 @@ export interface Props {
     autoApproveServerVerification?: boolean;
     onChildMouseLeave?: MouseEventHandler<HTMLDivElement>;
     onChildMouseEnter?: MouseEventHandler<HTMLDivElement>;
+    ref?: React.Ref<VncScreenHandle>;
 }
 
 export type VncScreenHandle = {
@@ -88,7 +89,9 @@ export type VncScreenHandle = {
     eventListeners: EventListeners;
 };
 
-type RuntimeConfig = {
+// Settings applied when creating a new RFB instance. Stored in a ref so
+// connect() reads latest values without changing its own identity.
+type ConnectionSettings = {
     url?: string;
     websocket?: WebSocket;
     viewOnly?: boolean;
@@ -102,27 +105,11 @@ type RuntimeConfig = {
     background?: string;
     qualityLevel?: number;
     compressionLevel?: number;
-    autoConnect: boolean;
-    retryDuration: number;
-    maxRetries: number;
     debug: boolean;
-    autoApproveServerVerification: boolean;
-    onConnect?: EventListeners['connect'];
-    onDisconnect?: EventListeners['disconnect'];
-    onCredentialsRequired?: EventListeners['credentialsrequired'];
-    onServerVerification?: (
-        event: NoVncEvents['serververification'],
-        context: ServerVerificationContext,
-    ) => void;
-    onSecurityFailure?: EventListeners['securityfailure'];
-    onClipboard?: EventListeners['clipboard'];
-    onBell?: EventListeners['bell'];
-    onDesktopName?: EventListeners['desktopname'];
-    onCapabilities?: EventListeners['capabilities'];
-    onClippingViewport?: EventListeners['clippingviewport'];
 };
 
-const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props, ref) => {
+const VncScreen = (props: Props) => {
+    const { ref } = props;
     const rfb = useRef<NoVncRfb | null>(null);
     const connected = useRef<boolean>(false);
     const eventListeners = useRef<EventListeners>({});
@@ -134,9 +121,6 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
     const retryAttempts = useRef(0);
     const isComponentActive = useRef(true);
     const credentialsMissing = useRef(false);
-
-    const connectRef = useRef<() => void>(() => {});
-    const disconnectRef = useRef<() => void>(() => {});
 
     const {
         url,
@@ -177,102 +161,29 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
         ? Math.max(0, maxRetries)
         : Number.POSITIVE_INFINITY;
 
-    const configRef = useRef<RuntimeConfig>({
-        url,
-        websocket,
-        viewOnly,
-        rfbOptions,
-        focusOnClick,
-        clipViewport,
-        dragViewport,
-        scaleViewport,
-        resizeSession,
-        showDotCursor,
-        background,
-        qualityLevel,
-        compressionLevel,
-        autoConnect,
-        retryDuration,
-        maxRetries: normalizedMaxRetries,
-        debug,
-        autoApproveServerVerification,
-        onConnect,
-        onDisconnect,
-        onCredentialsRequired,
-        onServerVerification,
-        onSecurityFailure,
-        onClipboard,
-        onBell,
-        onDesktopName,
-        onCapabilities,
-        onClippingViewport,
+    // Settings ref — connect() reads latest values without adding deps that
+    // would change its identity and trigger unnecessary reconnections.
+    const settingsRef = useRef<ConnectionSettings>({
+        url, websocket, viewOnly, rfbOptions, focusOnClick, clipViewport,
+        dragViewport, scaleViewport, resizeSession, showDotCursor,
+        background, qualityLevel, compressionLevel, debug,
+    });
+    useEffect(() => {
+        settingsRef.current = {
+            url, websocket, viewOnly, rfbOptions, focusOnClick, clipViewport,
+            dragViewport, scaleViewport, resizeSession, showDotCursor,
+            background, qualityLevel, compressionLevel, debug,
+        };
     });
 
-    useEffect(() => {
-        configRef.current = {
-            url,
-            websocket,
-            viewOnly,
-            rfbOptions,
-            focusOnClick,
-            clipViewport,
-            dragViewport,
-            scaleViewport,
-            resizeSession,
-            showDotCursor,
-            background,
-            qualityLevel,
-            compressionLevel,
-            autoConnect,
-            retryDuration,
-            maxRetries: normalizedMaxRetries,
-            debug,
-            autoApproveServerVerification,
-            onConnect,
-            onDisconnect,
-            onCredentialsRequired,
-            onServerVerification,
-            onSecurityFailure,
-            onClipboard,
-            onBell,
-            onDesktopName,
-            onCapabilities,
-            onClippingViewport,
-        };
-    }, [
-        autoApproveServerVerification,
-        autoConnect,
-        background,
-        clipViewport,
-        compressionLevel,
-        debug,
-        dragViewport,
-        focusOnClick,
-        maxRetries,
-        normalizedMaxRetries,
-        onBell,
-        onCapabilities,
-        onClipboard,
-        onClippingViewport,
-        onConnect,
-        onCredentialsRequired,
-        onDesktopName,
-        onDisconnect,
-        onSecurityFailure,
-        onServerVerification,
-        qualityLevel,
-        resizeSession,
-        retryDuration,
-        rfbOptions,
-        scaleViewport,
-        showDotCursor,
-        url,
-        viewOnly,
-        websocket,
-    ]);
+    // Ref for the consumer's onDisconnect callback — used by the imperative
+    // disconnect() for the synthetic disconnect event. Effect Events can only
+    // be called from within effects, so the imperative path uses this ref.
+    const onDisconnectPropRef = useRef(onDisconnect);
+    useEffect(() => { onDisconnectPropRef.current = onDisconnect; });
 
     const info = useCallback((...args: any[]) => {
-        if (configRef.current.debug) {
+        if (settingsRef.current.debug) {
             console.info(...args);
         }
     }, []);
@@ -283,21 +194,10 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
 
     type RfbWithApproveServer = NoVncRfb & { approveServer?: () => void };
 
-    const getRfb = () => {
-        return rfb.current;
-    };
-
-    const setRfb = (_rfb: NoVncRfb | null) => {
-        rfb.current = _rfb;
-    };
-
-    const getConnected = () => {
-        return connected.current;
-    };
-
-    const setConnected = (state: boolean) => {
-        connected.current = state;
-    };
+    const getRfb = () => rfb.current;
+    const setRfb = (_rfb: NoVncRfb | null) => { rfb.current = _rfb; };
+    const getConnected = () => connected.current;
+    const setConnected = (state: boolean) => { connected.current = state; };
 
     const clearRetryTimeout = useCallback(() => {
         if (retryTimeout.current) {
@@ -329,33 +229,73 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
         rfbWithApprove.approveServer?.();
     }, []);
 
+    // --- disconnect (defined before connect so connect can depend on it) ---
+
+    const disconnect = useCallback(() => {
+        clearRetryTimeout();
+
+        const currentRfb = getRfb();
+        if (!currentRfb) {
+            setConnected(false);
+            return;
+        }
+
+        try {
+            (Object.keys(eventListeners.current) as (NoVncEventType)[]).forEach((eventName) => {
+                if (eventListeners.current[eventName]) {
+                    currentRfb.removeEventListener(eventName, eventListeners.current[eventName]!);
+                    eventListeners.current[eventName] = undefined;
+                }
+            });
+
+            currentRfb.disconnect();
+            setRfb(null);
+            setConnected(false);
+            retryAttempts.current = 0;
+
+            // NOTE(roerohan): This needs to be called since the event listener
+            // is removed. Even if the event listener is removed after
+            // rfb.disconnect(), the disconnect event is not fired.
+            // Uses prop ref instead of Effect Event (imperative context).
+            onDisconnectPropRef.current?.(new CustomEvent('disconnect', { detail: { clean: true } }));
+            setLoading(true);
+        } catch (err) {
+            error(err);
+            setRfb(null);
+            setConnected(false);
+        }
+    }, [clearRetryTimeout, error]);
+
     const rejectServer = useCallback(() => {
-        disconnectRef.current();
-    }, []);
+        disconnect();
+    }, [disconnect]);
 
-    const _onConnect = useCallback((event: NoVncEvents['connect']) => {
-        const { onConnect: onConnectHandler } = configRef.current;
-        onConnectHandler?.(event);
+    // --- Effect Event handlers ---
+    // These always read latest callback props from the closure without
+    // appearing in any dependency array. Called only from RFB event listeners
+    // registered inside the connect() effect chain.
 
-        if (!onConnectHandler) {
+    const onVncConnect = useEffectEvent((event: NoVncEvents['connect']) => {
+        onConnect?.(event);
+
+        if (!onConnect) {
             info('Connected to remote VNC.');
         }
 
         retryAttempts.current = 0;
         credentialsMissing.current = false;
         setLoading(false);
-    }, [info]);
+    });
 
-    const _onDisconnect: EventListeners['disconnect'] = useCallback((event: NoVncEvents['disconnect']) => {
-        const config = configRef.current;
-        config.onDisconnect?.(event);
+    const onVncDisconnect = useEffectEvent((event: NoVncEvents['disconnect']) => {
+        onDisconnect?.(event);
 
         const clean = (event as { detail?: { clean?: boolean } }).detail?.clean === true;
-        const hasRetriesRemaining = retryAttempts.current < config.maxRetries;
+        const hasRetriesRemaining = retryAttempts.current < normalizedMaxRetries;
         const shouldRetry =
             !clean &&
-            config.autoConnect &&
-            !config.websocket &&
+            autoConnect &&
+            !websocket &&
             !credentialsMissing.current &&
             hasRetriesRemaining &&
             isComponentActive.current;
@@ -365,8 +305,8 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
             retryAttempts.current = nextAttempt;
 
             info(
-                `Unexpectedly disconnected from remote VNC, retrying in ${config.retryDuration / 1000} seconds ` +
-                `(attempt ${nextAttempt}/${config.maxRetries}).`,
+                `Unexpectedly disconnected from remote VNC, retrying in ${retryDuration / 1000} seconds ` +
+                `(attempt ${nextAttempt}/${normalizedMaxRetries}).`,
             );
 
             setRfb(null);
@@ -376,31 +316,27 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
                     return;
                 }
 
-                connectRef.current();
-            }, config.retryDuration);
-        } else if (!clean && config.autoConnect && !config.websocket && !hasRetriesRemaining) {
-            info(`Disconnected from remote VNC. Max retries reached (${config.maxRetries}).`);
+                connect();
+            }, retryDuration);
+        } else if (!clean && autoConnect && !websocket && !hasRetriesRemaining) {
+            info(`Disconnected from remote VNC. Max retries reached (${normalizedMaxRetries}).`);
         } else {
             info('Disconnected from remote VNC.');
         }
 
         setLoading(true);
-    }, [clearRetryTimeout, info]);
+    });
 
-    const _onCredentialsRequired: EventListeners['credentialsrequired'] = useCallback((event: NoVncEvents['credentialsrequired']) => {
+    const onVncCredentialsRequired = useEffectEvent((event: NoVncEvents['credentialsrequired']) => {
         const currentRfb = getRfb();
-        const {
-            onCredentialsRequired: onCredentialsRequiredHandler,
-            rfbOptions: currentRfbOptions,
-        } = configRef.current;
 
-        if (onCredentialsRequiredHandler) {
-            onCredentialsRequiredHandler(event);
+        if (onCredentialsRequired) {
+            onCredentialsRequired(event);
             return;
         }
 
         const requestedTypes = (event as { detail?: { types?: string[] } }).detail?.types ?? [];
-        const credentials = currentRfbOptions?.credentials;
+        const credentials = rfbOptions?.credentials;
 
         if (!credentials) {
             credentialsMissing.current = true;
@@ -460,38 +396,37 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
 
         credentialsMissing.current = false;
         currentRfb?.sendCredentials(nextCredentials);
-    }, [error]);
+    });
 
-    const _onDesktopName: EventListeners['desktopname'] = useCallback((event: NoVncEvents['desktopname']) => {
-        const { onDesktopName: onDesktopNameHandler } = configRef.current;
-        onDesktopNameHandler?.(event);
+    const onVncDesktopName = useEffectEvent((event: NoVncEvents['desktopname']) => {
+        onDesktopName?.(event);
 
-        if (!onDesktopNameHandler) {
+        if (!onDesktopName) {
             info(`Desktop name is ${event.detail.name}`);
         }
-    }, [info]);
+    });
 
-    const _onSecurityFailure: EventListeners['securityfailure'] = useCallback((event: NoVncEvents['securityfailure']) => {
-        configRef.current.onSecurityFailure?.(event);
-    }, []);
+    const onVncSecurityFailure = useEffectEvent((event: NoVncEvents['securityfailure']) => {
+        onSecurityFailure?.(event);
+    });
 
-    const _onClipboard: EventListeners['clipboard'] = useCallback((event: NoVncEvents['clipboard']) => {
-        configRef.current.onClipboard?.(event);
-    }, []);
+    const onVncClipboard = useEffectEvent((event: NoVncEvents['clipboard']) => {
+        onClipboard?.(event);
+    });
 
-    const _onBell: EventListeners['bell'] = useCallback((event: NoVncEvents['bell']) => {
-        configRef.current.onBell?.(event);
-    }, []);
+    const onVncBell = useEffectEvent((event: NoVncEvents['bell']) => {
+        onBell?.(event);
+    });
 
-    const _onCapabilities: EventListeners['capabilities'] = useCallback((event: NoVncEvents['capabilities']) => {
-        configRef.current.onCapabilities?.(event);
-    }, []);
+    const onVncCapabilities = useEffectEvent((event: NoVncEvents['capabilities']) => {
+        onCapabilities?.(event);
+    });
 
-    const _onClippingViewport: EventListeners['clippingviewport'] = useCallback((event: NoVncEvents['clippingviewport']) => {
-        configRef.current.onClippingViewport?.(event);
-    }, []);
+    const onVncClippingViewport = useEffectEvent((event: NoVncEvents['clippingviewport']) => {
+        onClippingViewport?.(event);
+    });
 
-    const _onServerVerification = useCallback(async (event: NoVncEvents['serververification']) => {
+    const onVncServerVerification = useEffectEvent(async (event: NoVncEvents['serververification']) => {
         const currentRfb = getRfb();
         const { detail } = event;
         const fingerprint = detail.type === 'RSA' && detail.publickey
@@ -513,15 +448,12 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
             reject: rejectServer,
         };
 
-        const { onServerVerification: onServerVerificationHandler, autoApproveServerVerification: shouldAutoApprove } =
-            configRef.current;
-
-        if (onServerVerificationHandler) {
-            onServerVerificationHandler(event, context);
+        if (onServerVerification) {
+            onServerVerification(event, context);
             return;
         }
 
-        if (shouldAutoApprove) {
+        if (autoApproveServerVerification) {
             info('Auto-approving server verification. Provide onServerVerification for manual verification.');
             approveServer();
             return;
@@ -531,40 +463,12 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
             'Server verification required. Provide onServerVerification and call context.approve() ' +
             'after validating identity, or set autoApproveServerVerification=true.',
         );
-    }, [approveServer, getServerFingerprint, info, rejectServer]);
+    });
 
-    const disconnect = useCallback(() => {
-        clearRetryTimeout();
-
-        const currentRfb = getRfb();
-        if (!currentRfb) {
-            setConnected(false);
-            return;
-        }
-
-        try {
-            (Object.keys(eventListeners.current) as (NoVncEventType)[]).forEach((eventName) => {
-                if (eventListeners.current[eventName]) {
-                    currentRfb.removeEventListener(eventName, eventListeners.current[eventName]!);
-                    eventListeners.current[eventName] = undefined;
-                }
-            });
-
-            currentRfb.disconnect();
-            setRfb(null);
-            setConnected(false);
-            retryAttempts.current = 0;
-
-            // NOTE(roerohan): This needs to be called since the event listener is removed.
-            // Even if the event listener is removed after rfb.disconnect(), the disconnect
-            // event is not fired.
-            _onDisconnect(new CustomEvent('disconnect', { detail: { clean: true } }));
-        } catch (err) {
-            error(err);
-            setRfb(null);
-            setConnected(false);
-        }
-    }, [_onDisconnect, clearRetryTimeout, error]);
+    // --- connect ---
+    // Reads connection settings from settingsRef (latest values without
+    // identity changes). Registers event listeners as arrow wrappers around
+    // Effect Events — the wrappers call the latest callback on every event.
 
     const connect = useCallback(() => {
         try {
@@ -576,8 +480,8 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
                 return;
             }
 
-            const config = configRef.current;
-            if (!config.url && !config.websocket) {
+            const s = settingsRef.current;
+            if (!s.url && !s.websocket) {
                 error('Either url or websocket must be provided');
                 setConnected(false);
                 return;
@@ -587,36 +491,40 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
             clearRetryTimeout();
             screen.current.replaceChildren();
 
-            const currentRfb = new RFB(screen.current, config.websocket || config.url!, config.rfbOptions);
+            const currentRfb = new RFB(screen.current, s.websocket || s.url!, s.rfbOptions);
 
-            currentRfb.viewOnly = config.viewOnly ?? false;
-            currentRfb.focusOnClick = config.focusOnClick ?? true;
-            currentRfb.clipViewport = config.clipViewport ?? false;
-            currentRfb.dragViewport = config.dragViewport ?? false;
-            currentRfb.resizeSession = config.resizeSession ?? false;
-            currentRfb.scaleViewport = config.scaleViewport ?? false;
-            currentRfb.showDotCursor = config.showDotCursor ?? false;
-            currentRfb.background = config.background ?? 'rgb(40, 40, 40)';
-            currentRfb.qualityLevel = config.qualityLevel ?? 6;
-            currentRfb.compressionLevel = config.compressionLevel ?? 2;
+            currentRfb.viewOnly = s.viewOnly ?? false;
+            currentRfb.focusOnClick = s.focusOnClick ?? true;
+            currentRfb.clipViewport = s.clipViewport ?? false;
+            currentRfb.dragViewport = s.dragViewport ?? false;
+            currentRfb.resizeSession = s.resizeSession ?? false;
+            currentRfb.scaleViewport = s.scaleViewport ?? false;
+            currentRfb.showDotCursor = s.showDotCursor ?? false;
+            currentRfb.background = s.background ?? 'rgb(40, 40, 40)';
+            currentRfb.qualityLevel = s.qualityLevel ?? 6;
+            currentRfb.compressionLevel = s.compressionLevel ?? 2;
             setRfb(currentRfb);
 
-            eventListeners.current = {
-                connect: _onConnect,
-                disconnect: _onDisconnect,
-                credentialsrequired: _onCredentialsRequired,
-                securityfailure: _onSecurityFailure,
-                clipboard: _onClipboard,
-                bell: _onBell,
-                desktopname: _onDesktopName,
-                capabilities: _onCapabilities,
-                clippingviewport: _onClippingViewport,
-                serververification: _onServerVerification,
+            // Arrow wrappers around Effect Events — Effect Events must be
+            // called from within effect callback chains, not passed directly
+            // as listener references (React docs caveat #2).
+            const listeners: EventListeners = {
+                connect: (e) => onVncConnect(e),
+                disconnect: (e) => onVncDisconnect(e),
+                credentialsrequired: (e) => onVncCredentialsRequired(e),
+                securityfailure: (e) => onVncSecurityFailure(e),
+                clipboard: (e) => onVncClipboard(e),
+                bell: (e) => onVncBell(e),
+                desktopname: (e) => onVncDesktopName(e),
+                capabilities: (e) => onVncCapabilities(e),
+                clippingviewport: (e) => onVncClippingViewport(e),
+                serververification: (e) => onVncServerVerification(e),
             };
+            eventListeners.current = listeners;
 
-            (Object.keys(eventListeners.current) as (NoVncEventType)[]).forEach((eventName) => {
-                if (eventListeners.current[eventName]) {
-                    currentRfb.addEventListener(eventName, eventListeners.current[eventName]!);
+            (Object.keys(listeners) as (NoVncEventType)[]).forEach((eventName) => {
+                if (listeners[eventName]) {
+                    currentRfb.addEventListener(eventName, listeners[eventName]!);
                 }
             });
 
@@ -625,26 +533,7 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
             error(err);
             setConnected(false);
         }
-    }, [
-        _onBell,
-        _onCapabilities,
-        _onClipboard,
-        _onConnect,
-        _onCredentialsRequired,
-        _onDesktopName,
-        _onDisconnect,
-        _onSecurityFailure,
-        _onServerVerification,
-        _onClippingViewport,
-        clearRetryTimeout,
-        disconnect,
-        error,
-    ]);
-
-    useEffect(() => {
-        connectRef.current = connect;
-        disconnectRef.current = disconnect;
-    }, [connect, disconnect]);
+    }, [disconnect, clearRetryTimeout, error]);
 
     const sendCredentials = (credentials: NoVncCredentials) => {
         const currentRfb = getRfb();
@@ -785,4 +674,4 @@ const VncScreen: React.ForwardRefRenderFunction<VncScreenHandle, Props> = (props
     );
 };
 
-export default forwardRef(VncScreen);
+export default VncScreen;

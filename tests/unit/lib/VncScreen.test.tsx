@@ -256,6 +256,97 @@ describe('VncScreen', () => {
         expect(onClipboardV2).toHaveBeenCalledTimes(1);
     });
 
+    it('uses latest onDisconnect callback without forcing reconnect', async () => {
+        const onDisconnectV1 = mock(() => {});
+        const { rerender } = render(
+            <VncScreen
+                url="ws://example.com"
+                onDisconnect={onDisconnectV1}
+            />,
+        );
+        const rfb = await waitForFirstRfb();
+
+        const onDisconnectV2 = mock(() => {});
+        rerender(
+            <VncScreen
+                url="ws://example.com"
+                onDisconnect={onDisconnectV2}
+            />,
+        );
+
+        expect(mockRfbInstances.length).toBe(1);
+
+        rfb.dispatchEvent(new CustomEvent('disconnect', {
+            detail: { clean: true },
+        }));
+
+        expect(onDisconnectV1).not.toHaveBeenCalled();
+        expect(onDisconnectV2).toHaveBeenCalledTimes(1);
+    });
+
+    it('uses latest onConnect callback on URL-change reconnection', async () => {
+        const onConnectV1 = mock(() => {});
+        const { rerender } = render(
+            <VncScreen
+                url="ws://example.com"
+                onConnect={onConnectV1}
+            />,
+        );
+        const firstRfb = await waitForFirstRfb();
+
+        firstRfb.dispatchEvent(new CustomEvent('connect'));
+        expect(onConnectV1).toHaveBeenCalledTimes(1);
+
+        const onConnectV2 = mock(() => {});
+        rerender(
+            <VncScreen
+                url="ws://example-2.com"
+                onConnect={onConnectV2}
+            />,
+        );
+
+        await waitFor(() => {
+            expect(mockRfbInstances.length).toBe(2);
+        }, { timeout: 1_000 });
+
+        const secondRfb = await getLastRfb();
+        secondRfb.dispatchEvent(new CustomEvent('connect'));
+
+        expect(onConnectV1).toHaveBeenCalledTimes(1);
+        expect(onConnectV2).toHaveBeenCalledTimes(1);
+    });
+
+    it('handles rapid callback prop changes without reconnecting', async () => {
+        const callbacks = Array.from({ length: 4 }, () => mock(() => {}));
+        const { rerender } = render(
+            <VncScreen
+                url="ws://example.com"
+                onClipboard={callbacks[0]}
+            />,
+        );
+        const rfb = await waitForFirstRfb();
+
+        for (let i = 1; i < callbacks.length; i++) {
+            rerender(
+                <VncScreen
+                    url="ws://example.com"
+                    onClipboard={callbacks[i]}
+                />,
+            );
+        }
+
+        expect(mockRfbInstances.length).toBe(1);
+
+        rfb.dispatchEvent(new CustomEvent('clipboard', {
+            detail: { text: 'after-rapid-changes' },
+        }));
+
+        for (let i = 0; i < callbacks.length - 1; i++) {
+            expect(callbacks[i]).not.toHaveBeenCalled();
+        }
+        expect(callbacks[callbacks.length - 1]).toHaveBeenCalledTimes(1);
+    });
+
     it('retries on unclean disconnect even when consumer provides onDisconnect callback', async () => {
         const onDisconnect = mock(() => {});
         render(
