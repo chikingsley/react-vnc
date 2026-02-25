@@ -271,7 +271,7 @@ Measurements:
 
 ## 5) noVNC version strategy (stable vs beta)
 
-Status: [ ] TODO
+Status: [x] DONE (2026-02-24) — Option B: keep beta, vendor types
 Priority: P1
 
 Problem:
@@ -435,7 +435,7 @@ Measurements:
 
 ## 8) Expand production-grade test matrix and release confidence checks
 
-Status: [ ] TODO
+Status: [x] DONE (2026-02-24) — unit tests expanded to 29; E2E deferred
 Priority: P0
 
 Problem:
@@ -586,7 +586,7 @@ Measurements:
 
 ### 9d) Synthetic disconnect event in `disconnect()` — document intentional behavior
 
-Status: [ ] TODO
+Status: [x] DONE (2026-02-24) — documented in README
 Priority: P3
 
 Problem:

@@ -192,8 +192,6 @@ const VncScreen = (props: Props) => {
         console.error(...args);
     }, []);
 
-    type RfbWithApproveServer = NoVncRfb & { approveServer?: () => void };
-
     const getRfb = () => rfb.current;
     const setRfb = (_rfb: NoVncRfb | null) => { rfb.current = _rfb; };
     const getConnected = () => connected.current;
@@ -225,8 +223,7 @@ const VncScreen = (props: Props) => {
             return;
         }
 
-        const rfbWithApprove = currentRfb as RfbWithApproveServer;
-        rfbWithApprove.approveServer?.();
+        currentRfb.approveServer?.();
     }, []);
 
     // --- disconnect (defined before connect so connect can depend on it) ---
